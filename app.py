@@ -4,7 +4,23 @@ import random
 # Set page configuration
 st.set_page_config(page_title="Roblox FFlag Generator", layout="centered")
 
-# Define the FFlag library (same as before, but in Python)
+# Initialize session state for checkboxes and output
+if "low_ping" not in st.session_state:
+    st.session_state.low_ping = False
+if "high_fps" not in st.session_state:
+    st.session_state.high_fps = False
+if "low_latency" not in st.session_state:
+    st.session_state.low_latency = False
+if "texture_opt" not in st.session_state:
+    st.session_state.texture_opt = False
+if "graphics_red" not in st.session_state:
+    st.session_state.graphics_red = False
+if "flag_forge" not in st.session_state:
+    st.session_state.flag_forge = False
+if "output" not in st.session_state:
+    st.session_state.output = ""
+
+# Define the FFlag library
 fflag_library = {
     "lowPing": [
         "\n".join([
@@ -448,12 +464,16 @@ fflag_library = {
     ]
 }
 
-# Custom CSS to style the app (similar to the original design)
+# Custom CSS to match the original design
 st.markdown("""
 <style>
 .stApp {
     background: linear-gradient(135deg, #134e4a, #5eead4);
     padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .container {
     background: white;
@@ -461,9 +481,9 @@ st.markdown("""
     padding: 32px;
     max-width: 600px;
     width: 100%;
-    margin: auto;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     border: 1px solid #d1d5db;
+    margin: auto;
 }
 h1 {
     text-align: center;
@@ -471,6 +491,12 @@ h1 {
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 24px;
+}
+.stCheckbox {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    color: #374151;
 }
 .stButton>button {
     background: #22c55e;
@@ -482,12 +508,14 @@ h1 {
     font-weight: 600;
     width: 100%;
     margin: 12px 0;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
 }
 .stButton>button:hover {
     background: #16a34a;
+    transform: translateY(-2px);
     box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
 }
-.preset-button {
+.preset-button>button {
     background: #4b5563;
     color: white;
     border: none;
@@ -495,10 +523,12 @@ h1 {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    margin: 6px;
+    width: 100%;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
 }
-.preset-button:hover {
+.preset-button>button:hover {
     background: #134e4a;
+    transform: translateY(-2px);
     box-shadow: 0 0 10px rgba(94, 234, 212, 0.5);
 }
 .output-box {
@@ -529,7 +559,7 @@ h1 {
     h1 {
         font-size: 24px;
     }
-    .stButton>button, .preset-button {
+    .stButton>button, .preset-button>button {
         font-size: 14px;
         padding: 12px;
     }
@@ -545,79 +575,68 @@ st.markdown("<h1>Roblox FFlag Generator</h1>", unsafe_allow_html=True)
 st.markdown("### Options", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
-    low_ping = st.checkbox("Low Ping")
-    high_fps = st.checkbox("High FPS")
-    low_latency = st.checkbox("Low Latency")
+    st.session_state.low_ping = st.checkbox("Low Ping", value=st.session_state.low_ping)
+    st.session_state.high_fps = st.checkbox("High FPS", value=st.session_state.high_fps)
+    st.session_state.low_latency = st.checkbox("Low Latency", value=st.session_state.low_latency)
 with col2:
-    texture_opt = st.checkbox("Texture Optimization")
-    graphics_red = st.checkbox("Graphics Reduction")
-    flag_forge = st.checkbox("FlagForge Enhancements")
+    st.session_state.texture_opt = st.checkbox("Texture Optimization", value=st.session_state.texture_opt)
+    st.session_state.graphics_red = st.checkbox("Graphics Reduction", value=st.session_state.graphics_red)
+    st.session_state.flag_forge = st.checkbox("FlagForge Enhancements", value=st.session_state.flag_forge)
 
 # Presets
 st.markdown("### Presets", unsafe_allow_html=True)
 col3, col4, col5, col6 = st.columns(4)
 with col3:
-    if st.button("Max Performance", key="max"):
-        low_ping, high_fps, low_latency, texture_opt, graphics_red, flag_forge = False, True, False, True, True, False
-        st.session_state["low_ping"] = low_ping
-        st.session_state["high_fps"] = high_fps
-        st.session_state["low_latency"] = low_latency
-        st.session_state["texture_opt"] = texture_opt
-        st.session_state["graphics_red"] = graphics_red
-        st.session_state["flag_forge"] = flag_forge
+    if st.button("Max Performance", key="max", help="Select High FPS, Texture Optimization, and Graphics Reduction"):
+        st.session_state.low_ping = False
+        st.session_state.high_fps = True
+        st.session_state.low_latency = False
+        st.session_state.texture_opt = True
+        st.session_state.graphics_red = True
+        st.session_state.flag_forge = False
+        st.experimental_rerun()
 with col4:
-    if st.button("Low-End Device", key="low"):
-        low_ping, high_fps, low_latency, texture_opt, graphics_red, flag_forge = False, False, False, True, True, False
-        st.session_state["low_ping"] = low_ping
-        st.session_state["high_fps"] = high_fps
-        st.session_state["low_latency"] = low_latency
-        st.session_state["texture_opt"] = texture_opt
-        st.session_state["graphics_red"] = graphics_red
-        st.session_state["flag_forge"] = flag_forge
+    if st.button("Low-End Device", key="low", help="Select Texture Optimization and Graphics Reduction"):
+        st.session_state.low_ping = False
+        st.session_state.high_fps = False
+        st.session_state.low_latency = False
+        st.session_state.texture_opt = True
+        st.session_state.graphics_red = True
+        st.session_state.flag_forge = False
+        st.experimental_rerun()
 with col5:
-    if st.button("Balanced Mode", key="balanced"):
-        low_ping, high_fps, low_latency, texture_opt, graphics_red, flag_forge = True, True, True, False, False, False
-        st.session_state["low_ping"] = low_ping
-        st.session_state["high_fps"] = high_fps
-        st.session_state["low_latency"] = low_latency
-        st.session_state["texture_opt"] = texture_opt
-        st.session_state["graphics_red"] = graphics_red
-        st.session_state["flag_forge"] = flag_forge
+    if st.button("Balanced Mode", key="balanced", help="Select Low Ping, High FPS, and Low Latency"):
+        st.session_state.low_ping = True
+        st.session_state.high_fps = True
+        st.session_state.low_latency = True
+        st.session_state.texture_opt = False
+        st.session_state.graphics_red = False
+        st.session_state.flag_forge = False
+        st.experimental_rerun()
 with col6:
-    if st.button("FlagForge Mode", key="flagforge"):
-        low_ping, high_fps, low_latency, texture_opt, graphics_red, flag_forge = True, True, False, False, False, True
-        st.session_state["low_ping"] = low_ping
-        st.session_state["high_fps"] = high_fps
-        st.session_state["low_latency"] = low_latency
-        st.session_state["texture_opt"] = texture_opt
-        st.session_state["graphics_red"] = graphics_red
-        st.session_state["flag_forge"] = flag_forge
-
-# Update checkbox states from session state (if preset was clicked)
-low_ping = st.session_state.get("low_ping", low_ping)
-high_fps = st.session_state.get("high_fps", high_fps)
-low_latency = st.session_state.get("low_latency", low_latency)
-texture_opt = st.session_state.get("texture_opt", texture_opt)
-graphics_red = st.session_state.get("graphics_red", graphics_red)
-flag_forge = st.session_state.get("flag_forge", flag_forge)
+    if st.button("FlagForge Mode", key="flagforge", help="Select Low Ping, High FPS, and FlagForge Enhancements"):
+        st.session_state.low_ping = True
+        st.session_state.high_fps = True
+        st.session_state.low_latency = False
+        st.session_state.texture_opt = False
+        st.session_state.graphics_red = False
+        st.session_state.flag_forge = True
+        st.experimental_rerun()
 
 # Generate FFlags button
-if "output" not in st.session_state:
-    st.session_state["output"] = ""
-
 if st.button("Generate FFlags"):
     preferences = []
-    if low_ping:
+    if st.session_state.low_ping:
         preferences.append("lowPing")
-    if high_fps:
+    if st.session_state.high_fps:
         preferences.append("highFPS")
-    if low_latency:
+    if st.session_state.low_latency:
         preferences.append("lowLatency")
-    if texture_opt:
+    if st.session_state.texture_opt:
         preferences.append("textureOpt")
-    if graphics_red:
+    if st.session_state.graphics_red:
         preferences.append("graphicsRed")
-    if flag_forge:
+    if st.session_state.flag_forge:
         preferences.append("flagForge")
 
     output = ""
@@ -626,15 +645,15 @@ if st.button("Generate FFlags"):
         random_flag_set = random.choice(flags)
         output += random_flag_set + "\n\n"
 
-    st.session_state["output"] = output.strip() if output else "Please select at least one preference."
+    st.session_state.output = output.strip() if output else "Please select at least one preference."
 
 # Display output
-st.markdown(f'<div class="output-box">{st.session_state["output"]}</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="output-box">{st.session_state.output}</div>', unsafe_allow_html=True)
 
 # Copy to Clipboard button
 if st.button("Copy to Clipboard"):
-    if st.session_state["output"] and st.session_state["output"] != "Please select at least one preference.":
-        st.write('<script>navigator.clipboard.writeText("' + st.session_state["output"] + '").then(() => alert("FFlags copied to clipboard!"));</script>', unsafe_allow_html=True)
+    if st.session_state.output and st.session_state.output != "Please select at least one preference.":
+        st.write('<script>navigator.clipboard.writeText("' + st.session_state.output + '").then(() => alert("FFlags copied to clipboard!"));</script>', unsafe_allow_html=True)
     else:
         st.error("Nothing to copy! Generate FFlags first.")
 
