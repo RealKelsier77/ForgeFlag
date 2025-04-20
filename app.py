@@ -1,686 +1,266 @@
 import streamlit as st
-from streamlit.components.v1 import html
+import random
 
 # Set page configuration
 st.set_page_config(page_title="Roblox FFlag Generator", layout="centered")
 
-# Define the HTML content (your FFlag Generator UI and logic)
-html_content = """
-<style>
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #134e4a, #5eead4);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-  }
-  .container {
-    background: white;
-    border-radius: 16px;
-    padding: 32px;
-    max-width: 600px;
-    width: 100%;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    border: 1px solid #d1d5db;
-  }
-  h1 {
-    text-align: center;
-    color: #134e4a;
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 24px;
-  }
-  .options, .presets {
-    margin: 20px 0;
-  }
-  .options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-  }
-  .options label {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    color: #374151;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .options label:hover {
-    color: #134e4a;
-  }
-  .options input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 12px;
-    accent-color: #5eead4;
-    cursor: pointer;
-  }
-  .presets {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-  }
-  .presets button {
-    background: #4b5563;
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-  }
-  .presets button:hover {
-    background: #134e4a;
-    transform: translateY(-2px);
-    box-shadow: 0 0 10px rgba(94, 234, 212, 0.5);
-  }
-  .presets button:focus {
-    outline: 2px solid #5eead4;
-    outline-offset: 2px;
-  }
-  #generate, #copy {
-    background: #22c55e;
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    margin: 12px 0;
-    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-  }
-  #generate:hover, #copy:hover {
-    background: #16a34a;
-    transform: translateY(-2px);
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-  }
-  #generate:focus, #copy:focus {
-    outline: 2px solid #5eead4;
-    outline-offset: 2px;
-  }
-  #output {
-    background: #f9fafb;
-    padding: 16px;
-    border-radius: 8px;
-    min-height: 120px;
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    color: #1f2937;
-    white-space: pre-wrap;
-    overflow-x: auto;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-height: 200px;
-    overflow-y: auto;
-    animation: fadeIn 0.3s ease-in;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .footer {
-    margin-top: 20px;
-    color: #f3f4f6;
-    font-size: 14px;
-    text-align: center;
-  }
-  @media (max-width: 600px) {
-    .container {
-      padding: 16px;
-    }
-    h1 {
-      font-size: 24px;
-    }
-    .options {
-      grid-template-columns: 1fr;
-    }
-    .options label {
-      font-size: 14px;
-    }
-    .presets button, #generate, #copy {
-      font-size: 14px;
-      padding: 12px;
-    }
-  }
-</style>
-<div class="container">
-  <h1>Roblox FFlag Generator</h1>
-  <div class="options">
-    <label><input type="checkbox" id="lowPing"> Low Ping</label>
-    <label><input type="checkbox" id="highFPS"> High FPS</label>
-    <label><input type="checkbox" id="lowLatency"> Low Latency</label>
-    <label><input type="checkbox" id="textureOpt"> Texture Optimization</label>
-    <label><input type="checkbox" id="graphicsRed"> Graphics Reduction</label>
-    <label><input type="checkbox" id="flagForge"> FlagForge Enhancements</label>
-  </div>
-  <div class="presets">
-    <button onclick="setPreset('max')">Max Performance</button>
-    <button onclick="setPreset('low')">Low-End Device</button>
-    <button onclick="setPreset('balanced')">Balanced Mode</button>
-    <button onclick="setPreset('flagForge')">FlagForge Mode</button>
-  </div>
-  <button id="generate" onclick="generateFFlags()">Generate FFlags</button>
-  <div id="output"></div>
-  <button id="copy" onclick="copyToClipboard()">Copy to Clipboard</button>
-</div>
-<div class="footer">Made by Kelsier</div>
-<script>
-  const fflagLibrary = {
-    lowPing: [
-      [
-        'FFlagNetworkPriority=true',
-        'FFlagReducePingSpikes=true',
-        'FFlagPingSmoothing=true',
-        'FFlagFastNetworkMode=true',
-        'FFlagLowPingOptimization1=true',
-        'FFlagNetBufferSize=8192',
-        'FFlagPacketCompression=true',
-        'FFlagNetworkThrottling=false',
-        'FFlagAsyncNetCalls=true',
-        'FFlagPingInterval=50',
-        'FFlagConnectionRetries=3',
-        'FFlagNetQueueOptimize=true'
-      ].join('\n'),
-      [
-        'FFlagNetworkPriority=true',
-        'FFlagLowPingOptimization2=true',
-        'FFlagPingSmoothing=true',
-        'FFlagFastNetworkMode=true',
-        'FFlagNetBufferSize=16384',
-        'FFlagPacketCompression=true',
-        'FFlagNetworkThrottling=false',
-        'FFlagAsyncNetCalls=true',
-        'FFlagPingInterval=40',
-        'FFlagConnectionRetries=5',
-        'FFlagNetQueueOptimize=true',
-        'FFlagLowPingBoost=true',
-        'FFlagNetLatencyCap=100'
-      ].join('\n'),
-      [
-        'FFlagNetworkPriority=true',
-        'FFlagReducePingSpikes=true',
-        'FFlagPingSmoothing=true',
-        'FFlagFastNetworkMode=true',
-        'FFlagNetBufferSize=4096',
-        'FFlagPacketCompression=true',
-        'FFlagNetworkThrottling=false',
-        'FFlagAsyncNetCalls=true',
-        'FFlagPingInterval=60',
-        'FFlagConnectionRetries=2',
-        'FFlagNetQueueOptimize=true',
-        'FFlagLowPingBoost=true'
-      ].join('\n'),
-      [
-        'FFlagNetworkPriority=true',
-        'FFlagLowPingOptimization1=true',
-        'FFlagPingSmoothing=true',
-        'FFlagFastNetworkMode=true',
-        'FFlagNetBufferSize=12288',
-        'FFlagPacketCompression=true',
-        'FFlagNetworkThrottling=false',
-        'FFlagAsyncNetCalls=true',
-        'FFlagPingInterval=45',
-        'FFlagConnectionRetries=4',
-        'FFlagNetQueueOptimize=true',
-        'FFlagLowPingBoost=true',
-        'FFlagNetLatencyCap=80',
-        'FFlagNetErrorCorrection=true'
-      ].join('\n'),
-      [
-        'FFlagNetworkPriority=true',
-        'FFlagReducePingSpikes=true',
-        'FFlagPingSmoothing=true',
-        'FFlagFastNetworkMode=true',
-        'FFlagNetBufferSize=20480',
-        'FFlagPacketCompression=true',
-        'FFlagNetworkThrottling=false',
-        'FFlagAsyncNetCalls=true',
-        'FFlagPingInterval=55',
-        'FFlagConnectionRetries=3',
-        'FFlagNetQueueOptimize=true',
-        'FFlagLowPingBoost=true',
-        'FFlagNetLatencyCap=120'
-      ].join('\n')
+# Define the FFlag library (same as before, but in Python)
+fflag_library = {
+    "lowPing": [
+        "\n".join([
+            "FFlagNetworkPriority=true",
+            "FFlagReducePingSpikes=true",
+            "FFlagPingSmoothing=true",
+            "FFlagFastNetworkMode=true",
+            "FFlagLowPingOptimization1=true",
+            "FFlagNetBufferSize=8192",
+            "FFlagPacketCompression=true",
+            "FFlagNetworkThrottling=false",
+            "FFlagAsyncNetCalls=true",
+            "FFlagPingInterval=50",
+            "FFlagConnectionRetries=3",
+            "FFlagNetQueueOptimize=true"
+        ]),
+        "\n".join([
+            "FFlagNetworkPriority=true",
+            "FFlagLowPingOptimization2=true",
+            "FFlagPingSmoothing=true",
+            "FFlagFastNetworkMode=true",
+            "FFlagNetBufferSize=16384",
+            "FFlagPacketCompression=true",
+            "FFlagNetworkThrottling=false",
+            "FFlagAsyncNetCalls=true",
+            "FFlagPingInterval=40",
+            "FFlagConnectionRetries=5",
+            "FFlagNetQueueOptimize=true",
+            "FFlagLowPingBoost=true",
+            "FFlagNetLatencyCap=100"
+        ]),
+        "\n".join([
+            "FFlagNetworkPriority=true",
+            "FFlagReducePingSpikes=true",
+            "FFlagPingSmoothing=true",
+            "FFlagFastNetworkMode=true",
+            "FFlagNetBufferSize=4096",
+            "FFlagPacketCompression=true",
+            "FFlagNetworkThrottling=false",
+            "FFlagAsyncNetCalls=true",
+            "FFlagPingInterval=60",
+            "FFlagConnectionRetries=2",
+            "FFlagNetQueueOptimize=true",
+            "FFlagLowPingBoost=true"
+        ]),
+        "\n".join([
+            "FFlagNetworkPriority=true",
+            "FFlagLowPingOptimization1=true",
+            "FFlagPingSmoothing=true",
+            "FFlagFastNetworkMode=true",
+            "FFlagNetBufferSize=12288",
+            "FFlagPacketCompression=true",
+            "FFlagNetworkThrottling=false",
+            "FFlagAsyncNetCalls=true",
+            "FFlagPingInterval=45",
+            "FFlagConnectionRetries=4",
+            "FFlagNetQueueOptimize=true",
+            "FFlagLowPingBoost=true",
+            "FFlagNetLatencyCap=80",
+            "FFlagNetErrorCorrection=true"
+        ]),
+        "\n".join([
+            "FFlagNetworkPriority=true",
+            "FFlagReducePingSpikes=true",
+            "FFlagPingSmoothing=true",
+            "FFlagFastNetworkMode=true",
+            "FFlagNetBufferSize=20480",
+            "FFlagPacketCompression=true",
+            "FFlagNetworkThrottling=false",
+            "FFlagAsyncNetCalls=true",
+            "FFlagPingInterval=55",
+            "FFlagConnectionRetries=3",
+            "FFlagNetQueueOptimize=true",
+            "FFlagLowPingBoost=true",
+            "FFlagNetLatencyCap=120"
+        ])
     ],
-    highFPS: [
-      [
-        'FFlagHighFPSBoost=true',
-        'FFlagFrameRateUnlock=true',
-        'FFlagVSyncOff=true',
-        'FFlagRenderPriority=true',
-        'FFlagFPSCapRemove=true',
-        'FFlagDynamicFrameRate=true',
-        'FFlagRenderThreadOptimize=true',
-        'FFlagGPUFrameBuffer=2',
-        'FFlagFrameQueueSize=3',
-        'FFlagRenderBatchSize=16',
-        'FFlagSyncRenderLoop=true',
-        'FFlagFPSPriority=true'
-      ].join('\n'),
-      [
-        'FFlagHighFPSBoost=true',
-        'FFlagFrameRateUnlock=true',
-        'FFlagVSyncOff=true',
-        'FFlagRenderPriority=true',
-        'FFlagFPSCapRemove=true',
-        'FFlagDynamicFrameRate=true',
-        'FFlagRenderThreadOptimize=true',
-        'FFlagGPUFrameBuffer=4',
-        'FFlagFrameQueueSize=2',
-        'FFlagRenderBatchSize=32',
-        'FFlagSyncRenderLoop=true',
-        'FFlagFPSPriority=true',
-        'FFlagHighFrameRateMode=true',
-        'FFlagRenderThrottle=false'
-      ].join('\n'),
-      [
-        'FFlagHighFPSBoost=true',
-        'FFlagFrameRateUnlock=true',
-        'FFlagVSyncOff=true',
-        'FFlagRenderPriority=true',
-        'FFlagFPSCapRemove=true',
-        'FFlagDynamicFrameRate=true',
-        'FFlagRenderThreadOptimize=true',
-        'FFlagGPUFrameBuffer=3',
-        'FFlagFrameQueueSize=4',
-        'FFlagRenderBatchSize=24',
-        'FFlagSyncRenderLoop=true',
-        'FFlagFPSPriority=true',
-        'FFlagHighFrameRateMode=true'
-      ].join('\n'),
-      [
-        'FFlagHighFPSBoost=true',
-        'FFlagFrameRateUnlock=true',
-        'FFlagVSyncOff=true',
-        'FFlagRenderPriority=true',
-        'FFlagFPSCapRemove=true',
-        'FFlagDynamicFrameRate=true',
-        'FFlagRenderThreadOptimize=true',
-        'FFlagGPUFrameBuffer=1',
-        'FFlagFrameQueueSize=5',
-        'FFlagRenderBatchSize=20',
-        'FFlagSyncRenderLoop=true',
-        'FFlagFPSPriority=true',
-        'FFlagHighFrameRateMode=true',
-        'FFlagRenderThrottle=false',
-        'FFlagFPSBoostExtra=true'
-      ].join('\n'),
-      [
-        'FFlagHighFPSBoost=true',
-        'FFlagFrameRateUnlock=true',
-        'FFlagVSyncOff=true',
-        'FFlagRenderPriority=true',
-        'FFlagFPSCapRemove=true',
-        'FFlagDynamicFrameRate=true',
-        'FFlagRenderThreadOptimize=true',
-        'FFlagGPUFrameBuffer=2',
-        'FFlagFrameQueueSize=3',
-        'FFlagRenderBatchSize=28',
-        'FFlagSyncRenderLoop=true',
-        'FFlagFPSPriority=true',
-        'FFlagHighFrameRateMode=true'
-      ].join('\n')
+    "highFPS": [
+        "\n".join([
+            "FFlagHighFPSBoost=true",
+            "FFlagFrameRateUnlock=true",
+            "FFlagVSyncOff=true",
+            "FFlagRenderPriority=true",
+            "FFlagFPSCapRemove=true",
+            "FFlagDynamicFrameRate=true",
+            "FFlagRenderThreadOptimize=true",
+            "FFlagGPUFrameBuffer=2",
+            "FFlagFrameQueueSize=3",
+            "FFlagRenderBatchSize=16",
+            "FFlagSyncRenderLoop=true",
+            "FFlagFPSPriority=true"
+        ]),
+        "\n".join([
+            "FFlagHighFPSBoost=true",
+            "FFlagFrameRateUnlock=true",
+            "FFlagVSyncOff=true",
+            "FFlagRenderPriority=true",
+            "FFlagFPSCapRemove=true",
+            "FFlagDynamicFrameRate=true",
+            "FFlagRenderThreadOptimize=true",
+            "FFlagGPUFrameBuffer=4",
+            "FFlagFrameQueueSize=2",
+            "FFlagRenderBatchSize=32",
+            "FFlagSyncRenderLoop=true",
+            "FFlagFPSPriority=true",
+            "FFlagHighFrameRateMode=true",
+            "FFlagRenderThrottle=false"
+        ]),
+        "\n".join([
+            "FFlagHighFPSBoost=true",
+            "FFlagFrameRateUnlock=true",
+            "FFlagVSyncOff=true",
+            "FFlagRenderPriority=true",
+            "FFlagFPSCapRemove=true",
+            "FFlagDynamicFrameRate=true",
+            "FFlagRenderThreadOptimize=true",
+            "FFlagGPUFrameBuffer=3",
+            "FFlagFrameQueueSize=4",
+            "FFlagRenderBatchSize=24",
+            "FFlagSyncRenderLoop=true",
+            "FFlagFPSPriority=true",
+            "FFlagHighFrameRateMode=true"
+        ]),
+        "\n".join([
+            "FFlagHighFPSBoost=true",
+            "FFlagFrameRateUnlock=true",
+            "FFlagVSyncOff=true",
+            "FFlagRenderPriority=true",
+            "FFlagFPSCapRemove=true",
+            "FFlagDynamicFrameRate=true",
+            "FFlagRenderThreadOptimize=true",
+            "FFlagGPUFrameBuffer=1",
+            "FFlagFrameQueueSize=5",
+            "FFlagRenderBatchSize=20",
+            "FFlagSyncRenderLoop=true",
+            "FFlagFPSPriority=true",
+            "FFlagHighFrameRateMode=true",
+            "FFlagRenderThrottle=false",
+            "FFlagFPSBoostExtra=true"
+        ]),
+        "\n".join([
+            "FFlagHighFPSBoost=true",
+            "FFlagFrameRateUnlock=true",
+            "FFlagVSyncOff=true",
+            "FFlagRenderPriority=true",
+            "FFlagFPSCapRemove=true",
+            "FFlagDynamicFrameRate=true",
+            "FFlagRenderThreadOptimize=true",
+            "FFlagGPUFrameBuffer=2",
+            "FFlagFrameQueueSize=3",
+            "FFlagRenderBatchSize=28",
+            "FFlagSyncRenderLoop=true",
+            "FFlagFPSPriority=true",
+            "FFlagHighFrameRateMode=true"
+        ])
     ],
-    lowLatency: [
-      [
-        'FFlagLowLatencyMode=true',
-        'FFlagInputLagReduction=true',
-        'FFlagFastResponse=true',
-        'FFlagLatencySmoother=true',
-        'FFlagQuickNet=true',
-        'FFlagInputBufferSize=2',
-        'FFlagNetResponseTime=50',
-        'FFlagAsyncInputHandling=true',
-        'FFlagLowLatencyPriority=true',
-        'FFlagEventQueueOptimize=true',
-        'FFlagInputPrediction=true',
-        'FFlagLatencyCap=60'
-      ].join('\n'),
-      [
-        'FFlagLowLatencyMode=true',
-        'FFlagInputLagReduction=true',
-        'FFlagFastResponse=true',
-        'FFlagLatencySmoother=true',
-        'FFlagQuickNet=true',
-        'FFlagInputBufferSize=3',
-        'FFlagNetResponseTime=40',
-        'FFlagAsyncInputHandling=true',
-        'FFlagLowLatencyPriority=true',
-        'FFlagEventQueueOptimize=true',
-        'FFlagInputPrediction=true',
-        'FFlagLatencyCap=50',
-        'FFlagLowLatencyBoost=true'
-      ].join('\n'),
-      [
-        'FFlagLowLatencyMode=true',
-        'FFlagInputLagReduction=true',
-        'FFlagFastResponse=true',
-        'FFlagLatencySmoother=true',
-        'FFlagQuickNet=true',
-        'FFlagInputBufferSize=1',
-        'FFlagNetResponseTime=60',
-        'FFlagAsyncInputHandling=true',
-        'FFlagLowLatencyPriority=true',
-        'FFlagEventQueueOptimize=true',
-        'FFlagInputPrediction=true',
-        'FFlagLatencyCap=70',
-        'FFlagLowLatencyBoost=true',
-        'FFlagInputSmoothing=true'
-      ].join('\n'),
-      [
-        'FFlagLowLatencyMode=true',
-        'FFlagInputLagReduction=true',
-        'FFlagFastResponse=true',
-        'FFlagLatencySmoother=true',
-        'FFlagQuickNet=true',
-        'FFlagInputBufferSize=4',
-        'FFlagNetResponseTime=45',
-        'FFlagAsyncInputHandling=true',
-        'FFlagLowLatencyPriority=true',
-        'FFlagEventQueueOptimize=true',
-        'FFlagInputPrediction=true',
-        'FFlagLatencyCap=55'
-      ].join('\n'),
-      [
-        'FFlagLowLatencyMode=true',
-        'FFlagInputLagReduction=true',
-        'FFlagFastResponse=true',
-        'FFlagLatencySmoother=true',
-        'FFlagQuickNet=true',
-        'FFlagInputBufferSize=2',
-        'FFlagNetResponseTime=55',
-        'FFlagAsyncInputHandling=true',
-        'FFlagLowLatencyPriority=true',
-        'FFlagEventQueueOptimize=true',
-        'FFlagInputPrediction=true',
-        'FFlagLatencyCap=65',
-        'FFlagLowLatencyBoost=true'
-      ].join('\n')
+    "lowLatency": [
+        "\n".join([
+            "FFlagLowLatencyMode=true",
+            "FFlagInputLagReduction=true",
+            "FFlagFastResponse=true",
+            "FFlagLatencySmoother=true",
+            "FFlagQuickNet=true",
+            "FFlagInputBufferSize=2",
+            "FFlagNetResponseTime=50",
+            "FFlagAsyncInputHandling=true",
+            "FFlagLowLatencyPriority=true",
+            "FFlagEventQueueOptimize=true",
+            "FFlagInputPrediction=true",
+            "FFlagLatencyCap=60"
+        ]),
+        "\n".join([
+            "FFlagLowLatencyMode=true",
+            "FFlagInputLagReduction=true",
+            "FFlagFastResponse=true",
+            "FFlagLatencySmoother=true",
+            "FFlagQuickNet=true",
+            "FFlagInputBufferSize=3",
+            "FFlagNetResponseTime=40",
+            "FFlagAsyncInputHandling=true",
+            "FFlagLowLatencyPriority=true",
+            "FFlagEventQueueOptimize=true",
+            "FFlagInputPrediction=true",
+            "FFlagLatencyCap=50",
+            "FFlagLowLatencyBoost=true"
+        ]),
+        "\n".join([
+            "FFlagLowLatencyMode=true",
+            "FFlagInputLagReduction=true",
+            "FFlagFastResponse=true",
+            "FFlagLatencySmoother=true",
+            "FFlagQuickNet=true",
+            "FFlagInputBufferSize=1",
+            "FFlagNetResponseTime=60",
+            "FFlagAsyncInputHandling=true",
+            "FFlagLowLatencyPriority=true",
+            "FFlagEventQueueOptimize=true",
+            "FFlagInputPrediction=true",
+            "FFlagLatencyCap=70",
+            "FFlagLowLatencyBoost=true",
+            "FFlagInputSmoothing=true"
+        ]),
+        "\n".join([
+            "FFlagLowLatencyMode=true",
+            "FFlagInputLagReduction=true",
+            "FFlagFastResponse=true",
+            "FFlagLatencySmoother=true",
+            "FFlagQuickNet=true",
+            "FFlagInputBufferSize=4",
+            "FFlagNetResponseTime=45",
+            "FFlagAsyncInputHandling=true",
+            "FFlagLowLatencyPriority=true",
+            "FFlagEventQueueOptimize=true",
+            "FFlagInputPrediction=true",
+            "FFlagLatencyCap=55"
+        ]),
+        "\n".join([
+            "FFlagLowLatencyMode=true",
+            "FFlagInputLagReduction=true",
+            "FFlagFastResponse=true",
+            "FFlagLatencySmoother=true",
+            "FFlagQuickNet=true",
+            "FFlagInputBufferSize=2",
+            "FFlagNetResponseTime=55",
+            "FFlagAsyncInputHandling=true",
+            "FFlagLowLatencyPriority=true",
+            "FFlagEventQueueOptimize=true",
+            "FFlagInputPrediction=true",
+            "FFlagLatencyCap=65",
+            "FFlagLowLatencyBoost=true"
+        ])
     ],
-    textureOpt: [
-      [
-        'FFlagTextureCompress=true',
-        'FFlagLowResTextures=true',
-        'FFlagTextureCache=true',
-        'FFlagMipMapReduce=true',
-        'FFlagTextureStream=true',
-        'FFlagTextureQuality=1',
-        'FFlagTextureMemoryLimit=256',
-        'FFlagAsyncTextureLoad=true',
-        'FFlagTextureDownscale=2',
-        'FFlagTexturePriority=true',
-        'FFlagTextureBatchSize=16',
-        'FFlagTextureOptimization=true'
-      ].join('\n'),
-      [
-        'FFlagTextureCompress=true',
-        'FFlagLowResTextures=true',
-        'FFlagTextureCache=true',
-        'FFlagMipMapReduce=true',
-        'FFlagTextureStream=true',
-        'FFlagTextureQuality=2',
-        'FFlagTextureMemoryLimit=512',
-        'FFlagAsyncTextureLoad=true',
-        'FFlagTextureDownscale=3',
-        'FFlagTexturePriority=true',
-        'FFlagTextureBatchSize=32',
-        'FFlagTextureOptimization=true',
-        'FFlagTextureCompressionLevel=2'
-      ].join('\n'),
-      [
-        'FFlagTextureCompress=true',
-        'FFlagLowResTextures=true',
-        'FFlagTextureCache=true',
-        'FFlagMipMapReduce=true',
-        'FFlagTextureStream=true',
-        'FFlagTextureQuality=1',
-        'FFlagTextureMemoryLimit=128',
-        'FFlagAsyncTextureLoad=true',
-        'FFlagTextureDownscale=1',
-        'FFlagTexturePriority=true',
-        'FFlagTextureBatchSize=24',
-        'FFlagTextureOptimization=true',
-        'FFlagTextureCompressionLevel=1',
-        'FFlagTextureStreamBoost=true'
-      ].join('\n'),
-      [
-        'FFlagTextureCompress=true',
-        'FFlagLowResTextures=true',
-        'FFlagTextureCache=true',
-        'FFlagMipMapReduce=true',
-        'FFlagTextureStream=true',
-        'FFlagTextureQuality=2',
-        'FFlagTextureMemoryLimit=384',
-        'FFlagAsyncTextureLoad=true',
-        'FFlagTextureDownscale=2',
-        'FFlagTexturePriority=true',
-        'FFlagTextureBatchSize=20',
-        'FFlagTextureOptimization=true',
-        'FFlagTextureCompressionLevel=3'
-      ].join('\n'),
-      [
-        'FFlagTextureCompress=true',
-        'FFlagLowResTextures=true',
-        'FFlagTextureCache=true',
-        'FFlagMipMapReduce=true',
-        'FFlagTextureStream=true',
-        'FFlagTextureQuality=1',
-        'FFlagTextureMemoryLimit=192',
-        'FFlagAsyncTextureLoad=true',
-        'FFlagTextureDownscale=3',
-        'FFlagTexturePriority=true',
-        'FFlagTextureBatchSize=28',
-        'FFlagTextureOptimization=true'
-      ].join('\n')
-    ],
-    graphicsRed: [
-      [
-        'FFlagGraphicsMinimal=true',
-        'FFlagShaderReduction=true',
-        'FFlagLowDetail=true',
-        'FFlagBasicRender=true',
-        'FFlagLightOptimization=true',
-        'FFlagShadowDisable=true',
-        'FFlagParticleReduction=true',
-        'FFlagRenderQuality=1',
-        'FFlagPostProcessing=false',
-        'FF HELPFlagAntiAliasing=false',
-        'FFlagGraphicsMemoryLimit=512',
-        'FFlagDrawDistance=500'
-      ].join('\n'),
-      [
-        'FFlagGraphicsMinimal=true',
-        'FFlagShaderReduction=true',
-        'FFlagLowDetail=true',
-        'FFlagBasicRender=true',
-        'FFlagLightOptimization=true',
-        'FFlagShadowDisable=true',
-        'FFlagParticleReduction=true',
-        'FFlagRenderQuality=2',
-        'FFlagPostProcessing=false',
-        'FFlagAntiAliasing=false',
-        'FFlagGraphicsMemoryLimit=256',
-        'FFlagDrawDistance=300',
-        'FFlagGraphicsSimplify=true'
-      ].join('\n'),
-      [
-        'FFlagGraphicsMinimal=true',
-        'FFlagShaderReduction=true',
-        'FFlagLowDetail=true',
-        'FFlagBasicRender=true',
-        'FFlagLightOptimization=true',
-        'FFlagShadowDisable=true',
-        'FFlagParticleReduction=true',
-        'FFlagRenderQuality=1',
-        'FFlagPostProcessing=false',
-        'FFlagAntiAliasing=false',
-        'FFlagGraphicsMemoryLimit=384',
-        'FFlagDrawDistance=400',
-        'FFlagGraphicsSimplify=true',
-        'FFlagRenderBatchOptimize=true'
-      ].join('\n'),
-      [
-        'FFlagGraphicsMinimal=true',
-        'FFlagShaderReduction=true',
-        'FFlagLowDetail=true',
-        'FFlagBasicRender=true',
-        'FFlagLightOptimization=true',
-        'FFlagShadowDisable=true',
-        'FFlagParticleReduction=true',
-        'FFlagRenderQuality=1',
-        'FFlagPostProcessing=false',
-        'FFlagAntiAliasing=false',
-        'FFlagGraphicsMemoryLimit=128',
-        'FFlagDrawDistance=600',
-        'FFlagGraphicsSimplify=true'
-      ].join('\n'),
-      [
-        'FFlagGraphicsMinimal=true',
-        'FFlagShaderReduction=true',
-        'FFlagLowDetail=true',
-        'FFlagBasicRender=true',
-        'FFlagLightOptimization=true',
-        'FFlagShadowDisable=true',
-        'FFlagParticleReduction=true',
-        'FFlagRenderQuality=2',
-        'FFlagPostProcessing=false',
-        'FFlagAntiAliasing=false',
-        'FFlagGraphicsMemoryLimit=320',
-        'FFlagDrawDistance=350',
-        'FFlagGraphicsSimplify=true',
-        'FFlagRenderBatchOptimize=true',
-        'FFlagLowGraphicsMode=true'
-      ].join('\n')
-    ],
-    flagForge: [
-      [
-        'FlagForgeNetworkBoost=true',
-        'FlagForgeGraphicsEnhance=false',
-        'FlagForgeUIModernizeV2=true',
-        'FlagForgePerfTrace=true',
-        'FFlagNetworkOptimize=true',
-        'FFlagRenderEnhance=false',
-        'FFlagUIEnhance=true',
-        'FFlagPerformanceTrace=true'
-      ].join('\n'),
-      [
-        'FlagForgeNetworkBoost=false',
-        'FlagForgeGraphicsEnhance=true',
-        'FlagForgeUIModernizeV2=true',
-        'FlagForgePerfTrace=true',
-        'FFlagNetworkOptimize=false',
-        'FFlagRenderEnhance=true',
-        'FFlagUIEnhance=true',
-        'FFlagPerformanceTrace=true',
-        'FlagForgeBoostLevel=1'
-      ].join('\n'),
-      [
-        'FlagForgeNetworkBoost=true',
-        'FlagForgeGraphicsEnhance=false',
-        'FlagForgeUIModernizeV2=false',
-        'FlagForgePerfTrace=true',
-        'FFlagNetworkOptimize=true',
-        'FFlagRenderEnhance=false',
-        'FFlagUIEnhance=false',
-        'FFlagPerformanceTrace=true'
-      ].join('\n'),
-      [
-        'FlagForgeNetworkBoost=true',
-        'FlagForgeGraphicsEnhance=true',
-        'FlagForgeUIModernizeV2=true',
-        'FlagForgePerfTrace=false',
-        'FFlagNetworkOptimize=true',
-        'FFlagRenderEnhance=true',
-        'FFlagUIEnhance=true',
-        'FFlagPerformanceTrace=false',
-        'FlagForgeBoostLevel=2'
-      ].join('\n'),
-      [
-        'FlagForgeNetworkBoost=false',
-        'FlagForgeGraphicsEnhance=false',
-        'FlagForgeUIModernizeV2=true',
-        'FlagForgePerfTrace=true',
-        'FFlagNetworkOptimize=false',
-        'FFlagRenderEnhance=false',
-        'FFlagUIEnhance=true',
-        'FFlagPerformanceTrace=true'
-      ].join('\n')
-    ]
-  };
-
-  function setPreset(mode) {
-    document.getElementById('lowPing').checked = false;
-    document.getElementById('highFPS').checked = false;
-    document.getElementById('lowLatency').checked = false;
-    document.getElementById('textureOpt').checked = false;
-    document.getElementById('graphicsRed').checked = false;
-    document.getElementById('flagForge').checked = false;
-
-    if (mode === 'max') {
-      document.getElementById('highFPS').checked = true;
-      document.getElementById('textureOpt').checked = true;
-      document.getElementById('graphicsRed').checked = true;
-    } else if (mode === 'low') {
-      document.getElementById('textureOpt').checked = true;
-      document.getElementById('graphicsRed').checked = true;
-    } else if (mode === 'balanced') {
-      document.getElementById('lowPing').checked = true;
-      document.getElementById('highFPS').checked = true;
-      document.getElementById('lowLatency').checked = true;
-    } else if (mode === 'flagForge') {
-      document.getElementById('flagForge').checked = true;
-      document.getElementById('lowPing').checked = true;
-      document.getElementById('highFPS').checked = true;
-    }
-  }
-
-  function generateFFlags() {
-    const preferences = [
-      document.getElementById('lowPing').checked ? 'lowPing' : null,
-      document.getElementById('highFPS').checked ? 'highFPS' : null,
-      document.getElementById('lowLatency').checked ? 'lowLatency' : null,
-      document.getElementById('textureOpt').checked ? 'textureOpt' : null,
-      document.getElementById('graphicsRed').checked ? 'graphicsRed' : null,
-      document.getElementById('flagForge').checked ? 'flagForge' : null
-    ].filter(Boolean);
-
-    let output = '';
-    preferences.forEach(pref => {
-      const flags = fflagLibrary[pref];
-      const randomFlagSet = flags[Math.floor(Math.random() * flags.length)];
-      output += randomFlagSet + '\n\n';
-    });
-
-    document.getElementById('output').textContent = output.trim() || 'Please select at least one preference.';
-  }
-
-  function copyToClipboard() {
-    const output = document.getElementById('output').textContent;
-    if (output && output !== 'Please select at least one preference.') {
-      navigator.clipboard.writeText(output).then(() => {
-        alert('FFlags copied to clipboard!');
-      }).catch(() => {
-        alert('Failed to copy FFlags.');
-      });
-    } else {
-      alert('Nothing to copy! Generate FFlags first.');
-    }
-  }
-</script>
-"""
-
-# Render the HTML content in Streamlit
-html(html_content, height=800, scrolling=True)
+    "textureOpt": [
+        "\n".join([
+            "FFlagTextureCompress=true",
+            "FFlagLowResTextures=true",
+            "FFlagTextureCache=true",
+            "FFlagMipMapReduce=true",
+            "FFlagTextureStream=true",
+            "FFlagTextureQuality=1",
+            "FFlagTextureMemoryLimit=256",
+            "FFlagAsyncTextureLoad=true",
+            "FFlagTextureDownscale=2",
+            "FFlagTexturePriority=true",
+            "FFlagTextureBatchSize=16",
+            "FFlagTextureOptimization=true"
+        ]),
+        "\n".join([
+            "FFlagTextureCompress=true",
+            "FFlagLowResTextures=true",
+            "FFlagTextureCache=true",
+            "FFlagMipMapReduce=true",
+            "FFlagTextureStream=true",
+            "FFlagTextureQuality=2",
+            "FFlagTextureMemoryLimit=512",
+            "FFlagAsyncTextureLoad=true",
+            "FFlagTextureDownscale=3",
+            "FFlagTexturePriority=true",
+            "FFlagTextureBatchSize=32
